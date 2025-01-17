@@ -1,10 +1,10 @@
-const express = require('express');
-require('express-async-errors');
+import express from 'express';
+import 'express-async-errors';
 
 const app = express();
 
 app.set('view engine', 'ejs');
-app.use(require('body-parser').urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true }));
 
 // secret word handling
 let secretWord = 'syzygy';
