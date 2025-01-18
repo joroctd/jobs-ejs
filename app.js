@@ -1,5 +1,6 @@
 import express from 'express';
 import 'express-async-errors';
+import connectDatabase from './db/connect';
 
 const app = express();
 
@@ -28,7 +29,7 @@ app.use((err, req, res, next) => {
 const port = process.env.PORT || 3000;
 const start = async () => {
 	try {
-		// await connectDatabase(process.env.MONGO_URI);
+		await connectDatabase(process.env.MONGO_URI);
 		app.listen(port, err => {
 			if (err) {
 				console.error(`Could not start server on port ${port}.`);
