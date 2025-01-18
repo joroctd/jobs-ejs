@@ -3,7 +3,10 @@ import 'express-async-errors';
 import session from 'express-session';
 import connectMongoSession from 'connect-mongodb-session';
 import flash from 'connect-flash';
+import setFlashLocals from './middleware/flashLocals.js';
 import wordRouter from './routes/secretWord.js';
+import notFound from './middleware/notFound.js';
+import errorHandlerMiddleware from './middleware/errorHandler.js';
 import connectDatabase from './db/connect.js';
 
 const app = express();
@@ -40,18 +43,12 @@ if (app.get('env') === 'production') {
 }
 
 app.use(session(sessionParams));
-app.use(flash());
+app.use(flash(), setFlashLocals);
 
 app.use('/secretWord', wordRouter);
 
-app.use((req, res) => {
-	res.status(404).send(`That page (${req.url}) was not found.`);
-});
-
-app.use((err, req, res, next) => {
-	res.status(500).send(err.message);
-	console.log(err);
-});
+app.use(notFound);
+app.use(errorHandlerMiddleware);
 
 const port = process.env.PORT || 3000;
 const start = async () => {
@@ -66,7 +63,7 @@ const start = async () => {
 			console.log(`Access at: http://localhost:${port}`);
 		});
 	} catch (error) {
-		console.log(error);
+		console.error(error);
 	}
 };
 start();
