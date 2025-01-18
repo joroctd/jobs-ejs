@@ -3,6 +3,7 @@ import 'express-async-errors';
 import session from 'express-session';
 import connectMongoSession from 'connect-mongodb-session';
 import flash from 'connect-flash';
+import wordRouter from './routes/secretWord.js';
 import connectDatabase from './db/connect.js';
 
 const app = express();
@@ -41,26 +42,7 @@ if (app.get('env') === 'production') {
 app.use(session(sessionParams));
 app.use(flash());
 
-app.get('/secretWord', (req, res) => {
-	if (!req.session.secretWord) req.session.secretWord = 'syzygy';
-	res.locals.info = req.flash('info');
-	res.locals.errors = req.flash('error');
-	res.render('secretWord', { secretWord: req.session.secretWord });
-});
-app.post('/secretWord', (req, res) => {
-	const { secretWord } = req.body;
-	if (!secretWord) {
-		req.flash('error', "That word won't work!");
-		req.flash('error', 'You must provide a word.');
-	} else if (secretWord.toUpperCase()[0] === 'P') {
-		req.flash('error', "That word won't work!");
-		req.flash('error', "You can't use words that start with 'p'.");
-	} else {
-		req.session.secretWord = secretWord;
-		req.flash('info', 'The secret word was changed.');
-	}
-	res.redirect('/secretWord');
-});
+app.use('/secretWord', wordRouter);
 
 app.use((req, res) => {
 	res.status(404).send(`That page (${req.url}) was not found.`);
