@@ -41,13 +41,24 @@ if (app.get('env') === 'production') {
 app.use(session(sessionParams));
 app.use(flash());
 
-// secret word handling
-let secretWord = 'syzygy';
 app.get('/secretWord', (req, res) => {
-	res.render('secretWord', { secretWord });
+	if (!req.session.secretWord) req.session.secretWord = 'syzygy';
+	res.locals.info = req.flash('info');
+	res.locals.errors = req.flash('error');
+	res.render('secretWord', { secretWord: req.session.secretWord });
 });
 app.post('/secretWord', (req, res) => {
-	secretWord = req.body.secretWord;
+	const { secretWord } = req.body;
+	if (!secretWord) {
+		req.flash('error', "That word won't work!");
+		req.flash('error', 'You must provide a word.');
+	} else if (secretWord.toUpperCase()[0] === 'P') {
+		req.flash('error', "That word won't work!");
+		req.flash('error', "You can't use words that start with 'p'.");
+	} else {
+		req.session.secretWord = secretWord;
+		req.flash('info', 'The secret word was changed.');
+	}
 	res.redirect('/secretWord');
 });
 
