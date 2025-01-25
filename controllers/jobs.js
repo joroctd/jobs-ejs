@@ -5,6 +5,8 @@ export const jobShowAll = async (req, res) => {
 	const jobs = await Job.find({ createdBy: req.user?.userId }).sort(
 		'createdAt'
 	);
+
+	// TODO: render jobs list view
 	res.json({ jobs, count: jobs.length });
 };
 
@@ -16,6 +18,7 @@ export const jobShow = async (req, res) => {
 
 	if (!job) throw new NotFoundError('Job not found.');
 
+	// TODO: render single job view
 	res.json({ job });
 };
 
@@ -54,5 +57,10 @@ export const jobDelete = async (req, res) => {
 
 	if (!job) throw new NotFoundError('Job not found.');
 
+	res.status(204).send();
+};
+
+export const jobShowCreate = (req, res) => {
+	// TODO: render form for new job
 	res.status(204).send();
 };
