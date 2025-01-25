@@ -1,14 +1,14 @@
 import Job from '../models/Job.js';
 import { BadRequestError, NotFoundError } from '../errors/index.js';
 
-export const getAllJobs = async (req, res) => {
+export const jobShowAll = async (req, res) => {
 	const jobs = await Job.find({ createdBy: req.user?.userId }).sort(
 		'createdAt'
 	);
 	res.json({ jobs, count: jobs.length });
 };
 
-export const getJob = async (req, res) => {
+export const jobShow = async (req, res) => {
 	const job = await Job.findOne({
 		createdBy: req.user?.userId,
 		_id: req.params.id
@@ -19,14 +19,14 @@ export const getJob = async (req, res) => {
 	res.json({ job });
 };
 
-export const createJob = async (req, res) => {
+export const jobCreate = async (req, res) => {
 	const newJob = { ...req.body };
 	newJob.createdBy = req.user.userId;
 	const job = await Job.create(newJob);
 	res.status(201).json({ job });
 };
 
-export const updateJob = async (req, res) => {
+export const jobUpdate = async (req, res) => {
 	const { company, position, status } = req.body;
 	if (company === '' || position === '' || status === '') {
 		throw new BadRequestError('Job fields cannot be an empty string.');
@@ -46,7 +46,7 @@ export const updateJob = async (req, res) => {
 	res.json({ job });
 };
 
-export const deleteJob = async (req, res) => {
+export const jobDelete = async (req, res) => {
 	const job = await Job.findOneAndDelete({
 		createdBy: req.user?.userId,
 		_id: req.params.id
