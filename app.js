@@ -9,6 +9,7 @@ import setLocals from './middleware/storeLocals.js';
 
 import wordRouter from './routes/secretWord.js';
 import sessionsRouter from './routes/sessions.js';
+import jobsRouter from './routes/jobs.js';
 
 import authMiddleware from './middleware/auth.js';
 import notFound from './middleware/notFound.js';
@@ -60,6 +61,7 @@ app.get('/', (req, res) => {
 });
 app.use('/secretWord', authMiddleware, wordRouter);
 app.use('/sessions', sessionsRouter);
+app.use('/jobs', authMiddleware, jobsRouter);
 
 app.use(notFound, errorHandlerMiddleware);
 
