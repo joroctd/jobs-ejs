@@ -1,5 +1,10 @@
 import express from 'express';
 import 'express-async-errors';
+import rateLimiter from 'express-rate-limit';
+import helmet from 'helmet';
+import hpp from 'hpp';
+import xss from './middleware/xss.js';
+
 import session from 'express-session';
 import connectMongoSession from 'connect-mongodb-session';
 import passport from 'passport';
@@ -11,7 +16,6 @@ import wordRouter from './routes/secretWord.js';
 import sessionsRouter from './routes/sessions.js';
 import jobsRouter from './routes/jobs.js';
 
-import xssClean from './middleware/xssClean.js';
 import authMiddleware from './middleware/session/auth.js';
 import notFound from './middleware/notFound.js';
 import errorHandlerMiddleware from './middleware/errorHandler.js';
@@ -21,8 +25,16 @@ import connectDatabase from './db/connect.js';
 const app = express();
 
 app.set('view engine', 'ejs');
-app.use(express.urlencoded({ extended: true }));
-app.use(xssClean);
+app.use(
+	rateLimiter({
+		windowMs: 15 * 60 * 1000, // 15 minutes
+		max: 100 // max requests, per IP, per amount of time above
+	}),
+	express.urlencoded({ extended: true }),
+	helmet(),
+	hpp(),
+	xss()
+);
 
 if (app.get('env') === 'development') {
 	process.loadEnvFile('./.env');
