@@ -2,31 +2,27 @@ import Job from '../models/Job.js';
 import { BadRequestError, NotFoundError } from '../errors/index.js';
 
 export const jobShowAll = async (req, res) => {
-	const jobs = await Job.find({ createdBy: req.user?.userId }).sort(
-		'createdAt'
-	);
+	const jobs = await Job.find({ createdBy: req.user?._id }).sort('createdAt');
 
-	// TODO: render jobs list view
-	res.json({ jobs, count: jobs.length });
+	res.render('jobs', { jobs });
 };
 
 export const jobShow = async (req, res) => {
 	const job = await Job.findOne({
-		createdBy: req.user?.userId,
+		createdBy: req.user?._id,
 		_id: req.params.id
 	});
 
 	if (!job) throw new NotFoundError('Job not found.');
 
-	// TODO: render single job view
-	res.json({ job });
+	res.render('job', { job });
 };
 
 export const jobCreate = async (req, res) => {
 	const newJob = { ...req.body };
-	newJob.createdBy = req.user.userId;
+	newJob.createdBy = req.user._id;
 	const job = await Job.create(newJob);
-	res.status(201).json({ job });
+	res.render('job', { job });
 };
 
 export const jobUpdate = async (req, res) => {
@@ -37,7 +33,7 @@ export const jobUpdate = async (req, res) => {
 
 	const job = await Job.findOneAndUpdate(
 		{
-			createdBy: req.user?.userId,
+			createdBy: req.user?._id,
 			_id: req.params.id
 		},
 		{ company, position, status },
@@ -46,21 +42,22 @@ export const jobUpdate = async (req, res) => {
 
 	if (!job) throw new NotFoundError('Job not found.');
 
-	res.json({ job });
+	const jobs = await Job.find({ createdBy: req.user?._id }).sort('createdAt');
+	res.render('jobs', { jobs });
 };
 
 export const jobDelete = async (req, res) => {
 	const job = await Job.findOneAndDelete({
-		createdBy: req.user?.userId,
+		createdBy: req.user?._id,
 		_id: req.params.id
 	});
 
 	if (!job) throw new NotFoundError('Job not found.');
 
-	res.status(204).send();
+	const jobs = await Job.find({ createdBy: req.user?._id }).sort('createdAt');
+	res.render('jobs', { jobs });
 };
 
 export const jobShowCreate = (req, res) => {
-	// TODO: render form for new job
-	res.status(204).send();
+	res.render('job', { job: null });
 };

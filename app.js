@@ -62,7 +62,10 @@ const sessionParams = {
 };
 const csrfOptions = {
 	protected_operations: ['POST'],
-	protected_content_types: ['application/json'],
+	protected_content_types: [
+		'application/json',
+		'application/x-www-form-urlencoded'
+	],
 	development_mode: true
 };
 if (app.get('env') === 'production') {
