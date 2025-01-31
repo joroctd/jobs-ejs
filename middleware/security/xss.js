@@ -1,4 +1,4 @@
-import { clean } from '../security/xss.js';
+import { clean } from '../../security/xss.js';
 
 // https://github.com/jsonmaur/xss-clean/blob/master/src/index.js
 /**
