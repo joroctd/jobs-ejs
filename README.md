@@ -1,6 +1,6 @@
 # To Do:
 
-- [ ] Incorporate `host-csrf` package to fix CSRF vulnerability
+- [ ] ~~Incorporate `host-csrf` package to~~ Fix CSRF vulnerability
 - [ ] Have the following routes usable from a web browser:
   - [ ] GET /jobs (display all the job listings belonging to this user)
   - [ ] POST /jobs (Add a new job listing)

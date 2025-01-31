@@ -3,15 +3,16 @@ import 'express-async-errors';
 import session from 'express-session';
 import connectMongoSession from 'connect-mongodb-session';
 import passport from 'passport';
-import passportInit from './passport/passportInit.js';
+import passportSetup from './security/passportSetup.js';
 import flash from 'connect-flash';
-import setLocals from './middleware/storeLocals.js';
+import setLocals from './middleware/session/storeLocals.js';
 
 import wordRouter from './routes/secretWord.js';
 import sessionsRouter from './routes/sessions.js';
 import jobsRouter from './routes/jobs.js';
 
-import authMiddleware from './middleware/auth.js';
+import xssClean from './middleware/xssClean.js';
+import authMiddleware from './middleware/session/auth.js';
 import notFound from './middleware/notFound.js';
 import errorHandlerMiddleware from './middleware/errorHandler.js';
 
@@ -21,6 +22,7 @@ const app = express();
 
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
+app.use(xssClean);
 
 if (app.get('env') === 'development') {
 	process.loadEnvFile('./.env');
@@ -31,17 +33,15 @@ const store = new MongoDBStore({
 	uri: process.env.MONGO_URI,
 	collection: 'mySessions'
 });
-store.on('error', error => {
-	console.error(error);
-});
+store.on('error', console.error);
+
 const sessionParams = {
 	secret: process.env.SESSION_SECRET,
 	resave: true,
 	saveUninitialized: true,
 	store,
 	cookie: {
-		secure: false,
-		sameSite: 'strict'
+		sameSite: true
 	}
 };
 
@@ -51,7 +51,7 @@ if (app.get('env') === 'production') {
 }
 
 app.use(session(sessionParams));
-passportInit();
+passportSetup();
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash(), setLocals);
