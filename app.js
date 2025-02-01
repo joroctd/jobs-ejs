@@ -1,16 +1,25 @@
 import express from 'express';
 import 'express-async-errors';
+import rateLimiter from 'express-rate-limit';
+import helmet from 'helmet';
+import hpp from 'hpp';
+import xss from './middleware/security/xss.js';
+import mongoSanitize from './middleware/security/mongoSanitize.js';
+
 import session from 'express-session';
 import connectMongoSession from 'connect-mongodb-session';
 import passport from 'passport';
-import passportInit from './passport/passportInit.js';
+import passportSetup from './security/passportSetup.js';
 import flash from 'connect-flash';
-import setLocals from './middleware/storeLocals.js';
+import setLocals from './middleware/session/storeLocals.js';
+import cookieParser from 'cookie-parser';
+import csrf from 'host-csrf';
 
 import wordRouter from './routes/secretWord.js';
 import sessionsRouter from './routes/sessions.js';
+import jobsRouter from './routes/jobs.js';
 
-import authMiddleware from './middleware/auth.js';
+import authMiddleware from './middleware/session/auth.js';
 import notFound from './middleware/notFound.js';
 import errorHandlerMiddleware from './middleware/errorHandler.js';
 
@@ -19,7 +28,17 @@ import connectDatabase from './db/connect.js';
 const app = express();
 
 app.set('view engine', 'ejs');
-app.use(express.urlencoded({ extended: true }));
+app.use(
+	rateLimiter({
+		windowMs: 15 * 60 * 1000, // 15 minutes
+		max: 100 // max requests, per IP, per amount of time above
+	}),
+	express.urlencoded({ extended: true }),
+	helmet(),
+	hpp(),
+	xss(),
+	mongoSanitize()
+);
 
 if (app.get('env') === 'development') {
 	process.loadEnvFile('./.env');
@@ -30,36 +49,45 @@ const store = new MongoDBStore({
 	uri: process.env.MONGO_URI,
 	collection: 'mySessions'
 });
-store.on('error', error => {
-	console.error(error);
-});
+store.on('error', console.error);
+
 const sessionParams = {
 	secret: process.env.SESSION_SECRET,
 	resave: true,
 	saveUninitialized: true,
 	store,
 	cookie: {
-		secure: false,
-		sameSite: 'strict'
+		sameSite: true
 	}
 };
-
+const csrfOptions = {
+	protected_operations: ['POST'],
+	protected_content_types: [
+		'application/json',
+		'application/x-www-form-urlencoded'
+	],
+	development_mode: true
+};
 if (app.get('env') === 'production') {
 	app.set('trust proxy', 1);
 	sessionParams.cookie.secure = true;
+	csrfOptions.development_mode = false;
 }
 
 app.use(session(sessionParams));
-passportInit();
-app.use(passport.initialize());
-app.use(passport.session());
+passportSetup();
+app.use(passport.initialize(), passport.session());
 app.use(flash(), setLocals);
+
+app.use(cookieParser(process.env.COOKIE_KEY));
+const csrfMiddleware = csrf(csrfOptions);
 
 app.get('/', (req, res) => {
 	res.render('index');
 });
-app.use('/secretWord', authMiddleware, wordRouter);
 app.use('/sessions', sessionsRouter);
+app.use('/secretWord', csrfMiddleware, authMiddleware, wordRouter);
+app.use('/jobs', csrfMiddleware, authMiddleware, jobsRouter);
 
 app.use(notFound, errorHandlerMiddleware);
 
