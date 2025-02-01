@@ -12,7 +12,14 @@
   </div>
   <div>
     <label name="status">Status:</label>
-    <input name="status" value="<%= job.status %>" />
+    <select id="status" name="status">
+      <option value="<%= job.status %>" selected><%= job.status %></option>
+      <% for (const status of validStatuses) { %>
+      <% if (status !== job.status) { %>
+      <option value="<%= status %>"><%= status %></option>
+      <% } %>
+      <% } %>
+    </select>
   </div>
   <div>
     <button>Edit job</button>
@@ -34,7 +41,11 @@
   </div>
   <div>
     <label name="status">Status:</label>
-    <input name="status" />
+    <select id="status" name="status">
+      <% for (const status of validStatuses) { %>
+      <option value="<%= status %>"><%= status %></option>
+      <% } %>
+    </select>
   </div>
   <div>
     <button>Submit job</button>

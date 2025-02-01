@@ -8,4 +8,4 @@
   - [x] GET /jobs/edit/:id (Get a particular entry and show it in the edit box)
   - [x] POST /jobs/update/:id (Update a particular entry)
   - [x] POST /jobs/delete/:id (Delete an entry)
-- [ ] Have the browser update based on changes and calls to the routes above.
+- [x] Have the browser update based on changes and calls to the routes above.

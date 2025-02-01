@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 
+export const validStatuses = ['previous', 'current', 'future', 'pending'];
+
 const JobSchema = new mongoose.Schema(
 	{
 		company: {
@@ -14,7 +16,7 @@ const JobSchema = new mongoose.Schema(
 		},
 		status: {
 			type: String,
-			enum: ['previous', 'current', 'future', 'pending'],
+			enum: validStatuses,
 			default: 'pending'
 		},
 		createdBy: {

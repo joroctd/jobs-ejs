@@ -7,28 +7,60 @@ export const jobShowAll = async (req, res) => {
 	res.render('jobs', { jobs });
 };
 
+const jobShowAllError = async (req, res) => {
+	const jobs = await Job.find({ createdBy: req.user?._id }).sort('createdAt');
+	res.render('jobs', { jobs, errors: req.flash('error') });
+};
+
 export const jobShow = async (req, res) => {
 	const job = await Job.findOne({
 		createdBy: req.user?._id,
 		_id: req.params.id
 	});
 
-	if (!job) throw new NotFoundError('Job not found.');
+	if (!job) {
+		req.flash('error', 'Job not found.');
+		jobShowAllError();
+		return;
+	}
 
 	res.render('job', { job });
+};
+
+const jobShowError = async (req, res) => {
+	const job = await Job.findOne({
+		createdBy: req.user?._id,
+		_id: req.params.id
+	});
+
+	if (!job) {
+		req.flash('error', 'Job not found.');
+		jobShowAllError();
+		return;
+	}
+
+	res.render('job', { job, errors: req.flash('error') });
 };
 
 export const jobCreate = async (req, res) => {
 	const newJob = { ...req.body };
 	newJob.createdBy = req.user._id;
 	const job = await Job.create(newJob);
-	res.render('job', { job });
+	if (!job) {
+		req.flash('error', 'Job creation failed.');
+		jobShowCreateError();
+		return;
+	}
+
+	jobShowAll(req, res);
 };
 
 export const jobUpdate = async (req, res) => {
 	const { company, position, status } = req.body;
 	if (company === '' || position === '' || status === '') {
-		throw new BadRequestError('Job fields cannot be an empty string.');
+		req.flash('error', 'Invalid, empty field(s) provided.');
+		jobShowError();
+		return;
 	}
 
 	const job = await Job.findOneAndUpdate(
@@ -40,10 +72,13 @@ export const jobUpdate = async (req, res) => {
 		{ new: true, runValidators: true }
 	);
 
-	if (!job) throw new NotFoundError('Job not found.');
+	if (!job) {
+		req.flash('error', 'Job not found.');
+		jobShowAllError();
+		return;
+	}
 
-	const jobs = await Job.find({ createdBy: req.user?._id }).sort('createdAt');
-	res.render('jobs', { jobs });
+	jobShowAll(req, res);
 };
 
 export const jobDelete = async (req, res) => {
@@ -52,12 +87,19 @@ export const jobDelete = async (req, res) => {
 		_id: req.params.id
 	});
 
-	if (!job) throw new NotFoundError('Job not found.');
+	if (!job) {
+		req.flash('error', 'Job not found. You may have sent multiple requests.');
+		jobShowAllError();
+		return;
+	}
 
-	const jobs = await Job.find({ createdBy: req.user?._id }).sort('createdAt');
-	res.render('jobs', { jobs });
+	jobShowAll(req, res);
 };
 
 export const jobShowCreate = (req, res) => {
 	res.render('job', { job: null });
+};
+
+const jobShowCreateError = (req, res) => {
+	res.render('job', { job: null, errors: req.flash('error') });
 };
