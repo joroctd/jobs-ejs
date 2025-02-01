@@ -2,11 +2,18 @@ import express from 'express';
 import 'express-async-errors';
 import session from 'express-session';
 import connectMongoSession from 'connect-mongodb-session';
+import passport from 'passport';
+import passportInit from './passport/passportInit.js';
 import flash from 'connect-flash';
-import setFlashLocals from './middleware/flashLocals.js';
+import setLocals from './middleware/storeLocals.js';
+
 import wordRouter from './routes/secretWord.js';
+import sessionsRouter from './routes/sessions.js';
+
+import authMiddleware from './middleware/auth.js';
 import notFound from './middleware/notFound.js';
 import errorHandlerMiddleware from './middleware/errorHandler.js';
+
 import connectDatabase from './db/connect.js';
 
 const app = express();
@@ -43,12 +50,18 @@ if (app.get('env') === 'production') {
 }
 
 app.use(session(sessionParams));
-app.use(flash(), setFlashLocals);
+passportInit();
+app.use(passport.initialize());
+app.use(passport.session());
+app.use(flash(), setLocals);
 
-app.use('/secretWord', wordRouter);
+app.get('/', (req, res) => {
+	res.render('index');
+});
+app.use('/secretWord', authMiddleware, wordRouter);
+app.use('/sessions', sessionsRouter);
 
-app.use(notFound);
-app.use(errorHandlerMiddleware);
+app.use(notFound, errorHandlerMiddleware);
 
 const port = process.env.PORT || 3000;
 const start = async () => {
