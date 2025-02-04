@@ -3,9 +3,14 @@ import 'express-async-errors';
 
 import session from 'express-session';
 import connectMongoSession from 'connect-mongodb-session';
+import passportInit from './utils/passportInit.js';
+import passport from 'passport';
 import flash from 'connect-flash';
 import storeLocals from './middleware/session/storeLocals.js';
 
+import authMiddleware from './middleware/security/auth.js';
+
+import sessionsRouter from './routes/sessions.js';
 import secretWordRouter from './routes/secretWord.js';
 
 import notFound from './middleware/notFound.js';
@@ -44,9 +49,15 @@ if (app.get('env') === 'production') {
 }
 
 app.use(session(sessionParams));
+passportInit();
+app.use(passport.initialize(), passport.session());
 app.use(flash(), storeLocals);
 
-app.use('/secretWord', secretWordRouter);
+app.get('/', (req, res) => {
+	res.render('index');
+});
+app.use('/sessions', sessionsRouter);
+app.use('/secretWord', authMiddleware, secretWordRouter);
 
 app.use(notFound, errorHandler);
 
