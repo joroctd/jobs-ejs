@@ -4,6 +4,12 @@ import 'express-async-errors';
 import session from 'express-session';
 import connectMongoSession from 'connect-mongodb-session';
 import flash from 'connect-flash';
+import storeLocals from './middleware/session/storeLocals.js';
+
+import secretWordRouter from './routes/secretWord.js';
+
+import notFound from './middleware/notFound.js';
+import errorHandler from './middleware/errorHandler.js';
 
 import connectDatabase from './db/connect.js';
 
@@ -38,28 +44,11 @@ if (app.get('env') === 'production') {
 }
 
 app.use(session(sessionParams));
-app.use(flash());
+app.use(flash(), storeLocals);
 
-app.get('/secretWord', (req, res) => {
-	if (!req.session.secretWord) {
-		req.session.secretWord = 'syzygy';
-	}
+app.use('/secretWord', secretWordRouter);
 
-	res.render('secretWord', { secretWord: req.session.secretWord });
-});
-app.post('/secretWord', (req, res) => {
-	req.session.secretWord = req.body.secretWord;
-	res.redirect('/secretWord');
-});
-
-app.use((req, res) => {
-	res.status(404).send(`That page (${req.url}) was not found.`);
-});
-
-app.use((err, req, res, next) => {
-	res.status(500).send(err.message);
-	console.log(err);
-});
+app.use(notFound, errorHandler);
 
 const port = process.env.PORT || 3000;
 const start = async () => {
