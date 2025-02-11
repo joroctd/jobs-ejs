@@ -1,6 +1,7 @@
 import express from 'express';
 import passport from 'passport';
 const router = express.Router();
+import csrf from 'host-csrf';
 
 import {
 	logonShow,
@@ -16,10 +17,13 @@ router
 	.get(logonShow)
 	.post(
 		passport.authenticate('local', {
-			successRedirect: '/',
 			failureRedirect: '/sessions/logon',
 			failureFlash: true
-		})
+		}),
+		(req, res) => {
+			csrf.refresh(req, res);
+			res.redirect('/');
+		}
 	);
 
 router.route('/logoff').post(logoff);

@@ -1,12 +1,19 @@
 import express from 'express';
 import 'express-async-errors';
 
+import rateLimiter from 'express-rate-limit';
+import helmet from 'helmet';
+import hpp from 'hpp';
+import xss from './middleware/security/xss.js';
+
 import session from 'express-session';
 import connectMongoSession from 'connect-mongodb-session';
-import passportInit from './utils/passportInit.js';
+import passportInit from './utils/security/passportInit.js';
 import passport from 'passport';
 import flash from 'connect-flash';
 import storeLocals from './middleware/session/storeLocals.js';
+import cookieParser from 'cookie-parser';
+import csrf from 'host-csrf';
 
 import authMiddleware from './middleware/security/auth.js';
 
@@ -20,12 +27,21 @@ import connectDatabase from './db/connect.js';
 
 const app = express();
 
+app.set('view engine', 'ejs');
+app.use(
+	rateLimiter({
+		windowMs: 15 * 60 * 1000, // 15 minutes
+		max: 100 // max requests, per IP, per amount of time above
+	}),
+	express.urlencoded({ extended: true }),
+	helmet(),
+	hpp(),
+	xss()
+);
+
 if (app.get('env') === 'development') {
 	process.loadEnvFile('./.env');
 }
-
-app.set('view engine', 'ejs');
-app.use(express.urlencoded({ extended: true }));
 
 const MongoDBStore = connectMongoSession(session);
 const store = new MongoDBStore({
@@ -43,17 +59,30 @@ const sessionParams = {
 		sameSite: 'strict'
 	}
 };
+const csrfOptions = {
+	protected_operations: ['POST'],
+	protected_content_types: [
+		'application/json',
+		'application/x-www-form-urlencoded'
+	],
+	development_mode: true
+};
 
 if (app.get('env') === 'production') {
 	sessionParams.cookie.secure = true;
+	csrfOptions.development_mode = false;
 }
 
 app.use(session(sessionParams));
 passportInit();
 app.use(passport.initialize(), passport.session());
 app.use(flash(), storeLocals);
+app.use(cookieParser(process.env.SESSION_SECRET));
+const csrfMiddleware = csrf(csrfOptions);
+app.use(csrfMiddleware);
 
 app.get('/', (req, res) => {
+	csrf.token(req, res);
 	res.render('index');
 });
 app.use('/sessions', sessionsRouter);
