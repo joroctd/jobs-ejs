@@ -82,6 +82,7 @@ const csrfMiddleware = csrf(csrfOptions);
 app.use(csrfMiddleware);
 
 app.get('/', (req, res) => {
+	// initial CSRF token depends on user going to home page first
 	csrf.token(req, res);
 	res.render('index');
 });
