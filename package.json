@@ -22,9 +22,11 @@
 		"express-session": "^1.18.1",
 		"helmet": "^8.0.0",
 		"host-csrf": "^1.0.2",
+		"hpp": "^0.2.3",
 		"mongoose": "^8.9.5",
 		"passport": "^0.7.0",
-		"passport-local": "^1.0.0"
+		"passport-local": "^1.0.0",
+		"xss-filters": "^1.2.7"
 	},
 	"devDependencies": {
 		"eslint": "^9.18.0",
